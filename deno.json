@@ -1,0 +1,17 @@
+{
+  "name": "@alg/stream",
+  "version": "0.0.1",
+  "license": "MIT",
+  "exports": "./src/main.js",
+  "lock": false,
+  "publish": {
+    "include": [
+      "LICENSE",
+      "README.md",
+      "src/**"
+    ],
+    "exclude": [
+      "tests/**"
+    ]
+  }
+}

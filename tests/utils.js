@@ -1,0 +1,25 @@
+import {assertEquals} from "jsr:@std/assert@1";
+
+export function assertIterEquals(iter1, iter2, limit) {
+    if (limit === undefined) {
+        assertEquals([...iter1], [...iter2]);
+    } else {
+        iter1 = iter1[Symbol.iterator]();
+        iter2 = iter2[Symbol.iterator]();
+        for (let i = 0; i < limit; i++) {
+            const e1 = iter1.next().value;
+            const e2 = iter2.next().value;
+            assertEquals(e1, e2);
+        }
+    }
+}
+
+export function alph(n) {
+    return "abcdefghijklmnopqrstuvwxyz".slice(0, n)[Symbol.iterator]();
+}
+
+export function* num(n) {
+    for (let i = 0; i < n; i++) {
+        yield i;
+    }
+}
