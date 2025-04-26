@@ -86,27 +86,6 @@ Deno.test({
 })
 
 Deno.test({
-    name: "Empty iterables yield no values when enumerated",
-    fn: () => assertIterEquals(Stream.enumerate([]), []),
-});
-
-Deno.test({
-    name: "Iterables can be enumerated",
-    fn: () => assertIterEquals(
-        Stream.enumerate(alph(3)),
-        [[0, "a"], [1, "b"], [2, "c"]],
-    ),
-});
-
-Deno.test({
-    name: "Iterables can be enumerated with start values",
-    fn: () => assertIterEquals(
-        Stream.enumerate(alph(3), 5),
-        [[5, "a"], [6, "b"], [7, "c"]],
-    ),
-});
-
-Deno.test({
     name: "Filtering values in empty iterables yields an empty iterable",
     fn: () => assertIterEquals(Stream.filter([], (_) => true), []),
 });

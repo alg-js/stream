@@ -50,13 +50,6 @@ export function* dropWhile(iterable, predicate) {
     }
 }
 
-export function* enumerate(iterable, start = 0) {
-    for (const e of iterable) {
-        yield [start, e];
-        start += 1;
-    }
-}
-
 export function filter(iterable, predicate) {
     return iter(iterable).filter(predicate);
 }

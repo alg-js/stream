@@ -45,16 +45,6 @@ export function dropWhile<T>(
 ): Iterator<T>;
 
 /**
- * Returns 2-tuples of the form `[idx, value]`. Where `idx` is the index of the
- * current element starting at the given start value and `value` is the current
- * element
- */
-export function enumerate<T>(
-  iterable: Iterable<T>,
-  start: number,
-): Iterator<[number, T]>;
-
-/**
  * Filters the iterable using the given predicate
  */
 export function filter<T>(
