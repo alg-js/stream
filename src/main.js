@@ -54,8 +54,12 @@ export function filter(iterable, predicate) {
     return iter(iterable).filter(predicate);
 }
 
-export function flatMap(iterable, mapping) {
-    return iter(iterable).flatMap(mapping);
+export function* flatMap(iterable, mapping) {
+    let i = 0;
+    for (const e of iterable) {
+        yield* mapping(e, i);
+        i += 1;
+    }
 }
 
 export function* peek(iterable, consumer) {
