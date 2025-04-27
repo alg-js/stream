@@ -1,5 +1,12 @@
 import {assertEquals} from "jsr:@std/assert@1";
 
+/**
+ * A function that should not be called
+ */
+export function bang() {
+    throw new Error("This should never happen");
+}
+
 export function assertIterEquals(iter1, iter2, limit) {
     if (limit === undefined) {
         assertEquals([...iter1], [...iter2]);

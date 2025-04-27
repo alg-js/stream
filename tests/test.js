@@ -1,6 +1,6 @@
 import {assertEquals, assertThrows} from "jsr:@std/assert@1";
 import * as Stream from "../src/main.js";
-import {alph, assertIterEquals, num} from "./utils.js";
+import {alph, assertIterEquals, bang, num} from "./utils.js";
 
 Deno.test({
     name: "Cycle will cycle iterators",
@@ -189,6 +189,45 @@ Deno.test({
     fn: () => assertIterEquals(
         Stream.map(alph(3), (e, i) => e.repeat(i + 1)),
         ["a", "bb", "ccc"],
+    ),
+});
+
+Deno.test({
+    name: "Scan yields nothing on empty iterables",
+    fn: () => assertIterEquals(Stream.scan([], bang), []),
+});
+
+Deno.test({
+    name: "Scan yields the initial value when given",
+    fn: () => assertIterEquals(Stream.scan([], bang, "a"), ["a"]),
+});
+
+Deno.test({
+    name: "Scan yields the first value of the iterable",
+    fn: () => assertIterEquals(Stream.scan(["a"], bang), ["a"]),
+});
+
+Deno.test({
+    name: "Scan accumulates values",
+    fn: () => assertIterEquals(
+        Stream.scan(alph(4), (a, e) => a + e),
+        ["a", "ab", "abc", "abcd"]
+    ),
+});
+
+Deno.test({
+    name: "Scan accumulator takes an index",
+    fn: () => assertIterEquals(
+        Stream.scan(alph(4), (a, e, i) => a + e + i),
+        ["a", "ab1", "ab1c2", "ab1c2d3"],
+    ),
+});
+
+Deno.test({
+    name: "Scan accumulator index is adjusted for initial values",
+    fn: () => assertIterEquals(
+        Stream.scan(alph(4), (a, e, i) => a + e + i, "X"),
+        ["X", "Xa0", "Xa0b1", "Xa0b1c2", "Xa0b1c2d3"],
     ),
 });
 

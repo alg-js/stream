@@ -4,9 +4,22 @@
  * A function that returns a truthy or falsy value
  */
 type Predicate<T> = (e: T, i?: number) => boolean;
+/**
+ * A function that maps the given value
+ */
 type Mapping<T, R> = (e: T, i?: number) => R;
+/**
+ * A function that performs some operation and returns nothing
+ */
 type Consumer<T> = (e: T, i?: number) => void;
+/**
+ * A function that updates the given value
+ */
 type Update<T> = (e: T, i?: number) => T;
+/**
+ * A function that accumulates values
+ */
+type Accumulator<T, R> = (acc: R, e: T, i?: number) => R;
 
 /**
  * Repeatedly yields elements from given iterator indefinitely.
@@ -132,29 +145,8 @@ export function flatMap<T, R>(
  * @returns {Iterator<T>} An infinite iterator of accumulated values
  */
 export function iterate<T>(
-    accumulator: T,
-    update: Update<T>
-): Iterator<T>
-
-/**
- * Applies the given consumer with each item and yields each value.
- *
- * @example
- * ```javascript
- * const data = ["a", "b", "c"];
- * const echo = Stream.peek(data, (e, i) => console.info([e, i]));
- * console.log(...echo);  // [ "a", 0 ] \ [ "b", 1 ] \ [ "c", 2 ] \ a b c
- * ```
- *
- * @template T
- * @param {Iterable<T>} iterable An iterable
- * @param {Consumer<T>} consumer A function that does something with `T` and
- *  has no result/
- * @returns {Iterator<T>} The values of {@link iterable}
- */
-export function peek<T>(
-  iterable: Iterable<T>,
-  consumer: Consumer<T>,
+  accumulator: T,
+  update: Update<T>,
 ): Iterator<T>;
 
 /**
@@ -177,6 +169,27 @@ export function map<T, R>(
   iterable: Iterable<T>,
   mapping: Mapping<T, R>,
 ): Iterator<R>;
+
+/**
+ * Applies the given consumer with each item and yields each value.
+ *
+ * @example
+ * ```javascript
+ * const data = ["a", "b", "c"];
+ * const echo = Stream.peek(data, (e, i) => console.info([e, i]));
+ * console.log(...echo);  // [ "a", 0 ] \ [ "b", 1 ] \ [ "c", 2 ] \ a b c
+ * ```
+ *
+ * @template T
+ * @param {Iterable<T>} iterable An iterable
+ * @param {Consumer<T>} consumer A function that does something with `T` and
+ *  has no result/
+ * @returns {Iterator<T>} The values of {@link iterable}
+ */
+export function peek<T>(
+  iterable: Iterable<T>,
+  consumer: Consumer<T>,
+): Iterator<T>;
 
 /**
  * Indefinitely yields the given object.
@@ -213,6 +226,48 @@ export function repeat<T>(
   object: T,
   times: number,
 ): Iterator<T>;
+
+/**
+ * Scans the given iterable, accumulating and yielding a result for each value.
+ * The first value of the iterable is used as the initial accumulator value.
+ *
+ * @example
+ * ```javascript
+ * const data = [1, 4, 1, 5];
+ * console.log(...Stream.scan(data, (a, e) => a + e, 3));  // 3 4 8 9 14
+ * ```
+ *
+ * @template T
+ * @param {Iterable<T>} iterable
+ * @param {Accumulator<T, T>} accumulator
+ * @returns {Iterator<T>} The scanned results
+ */
+export function scan<T>(
+  iterable: Iterable<T>,
+  accumulator: Accumulator<T, T>,
+): Iterator<T>;
+
+/**
+ * Scans the given iterable, accumulating and yielding a result for each value.
+ * Uses and yields `initial` as the initial accumulator value.
+ *
+ * @example
+ * ```javascript
+ * const data = [1, 4, 1, 5];
+ * console.log(...Stream.scan(data, (a, e) => a + e), 3);  // 3 4 8 9 14
+ * ```
+ *
+ * @template T
+ * @template R
+ * @param {Iterable<T>} iterable
+ * @param {Accumulator<T, R>} accumulator
+ * @param {R} initial
+ */
+export function scan<T, R>(
+  iterable: Iterator<T>,
+  accumulator: Accumulator<T, R>,
+  initial: R,
+): Iterator<R>;
 
 /**
  * Takes and yields the first `limit` items from the iterable

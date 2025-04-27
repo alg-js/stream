@@ -88,6 +88,28 @@ export function* repeat(object, times) {
     }
 }
 
+export function* scan(iterable, accumulator, initial) {
+    let acc, i;
+    const it = iter(iterable);
+    if (initial !== undefined) {
+        acc = initial;
+        i = 0
+    } else {
+        const first = it.next()
+        if (first.done) {
+            return;
+        }
+        acc = first.value;
+        i = 1;
+    }
+    yield acc;
+    for (const e of it) {
+        acc = accumulator(acc, e, i);
+        yield acc;
+        i += 1;
+    }
+}
+
 export function take(iterable, limit) {
     return iter(iterable).take(limit);
 }
