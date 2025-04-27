@@ -2,31 +2,6 @@ import {assertEquals, assertThrows} from "jsr:@std/assert@1";
 import * as Stream from "../src/main.js";
 import {alph, assertIterEquals, num} from "./utils.js";
 
-
-Deno.test({
-    name: "Count creates a sequence starting at 0 with no args",
-    fn: () => assertIterEquals(Stream.count(), [0, 1, 2, 3, 4, 5], 6),
-});
-
-Deno.test({
-    name: "Count creates a sequence with a start and step value",
-    fn: () => assertIterEquals(Stream.count(3, 5), [3, 8, 13, 18, 23, 28], 6),
-});
-
-Deno.test({
-    name: "Count creates a sequence with a start and negative step value",
-    fn: () => assertIterEquals(
-        Stream.count(3, -5),
-        [3, -2, -7, -12, -17, -22],
-        6,
-    ),
-});
-
-Deno.test({
-    name: "Count creates a sequence with a start and 0 step value",
-    fn: () => assertIterEquals(Stream.count(3, 0), [3, 3, 3, 3, 3, 3], 6),
-});
-
 Deno.test({
     name: "Cycle will cycle iterators",
     fn: () => assertIterEquals(Stream.cycle(alph(3)), "abcabcabc", 9),
@@ -151,6 +126,24 @@ Deno.test({
 });
 
 Deno.test({
+    name: "Iterate yields values",
+    fn: () => assertIterEquals(
+        Stream.iterate(0, (e) => e + 1),
+        [0, 1, 2, 3, 4, 5],
+        6,
+    ),
+});
+
+Deno.test({
+    name: "Iterate function takes indices",
+    fn: () => assertIterEquals(
+        Stream.iterate(0, (e, i) => e + i),
+        [0, 0, 1, 3, 6],
+        5,
+    ),
+});
+
+Deno.test({
     name: "For each consumes nothing on empty iterables",
     fn: () => [...Stream.peek([], (_) => {
         throw new Error("Bang!");
@@ -264,7 +257,10 @@ Deno.test({
 
 Deno.test({
     name: "Take while will take one value",
-    fn: () => assertIterEquals(Stream.takeWhile(alph(3), (e) => e === "a"), ["a"]),
+    fn: () => assertIterEquals(
+        Stream.takeWhile(alph(3), (e) => e === "a"),
+        ["a"],
+    ),
 });
 
 Deno.test({

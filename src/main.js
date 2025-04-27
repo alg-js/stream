@@ -9,14 +9,6 @@ function iter(iterable) {
     return iterable[Symbol.iterator]();
 }
 
-export function* count(start = 0, step = 1) {
-    let i = start;
-    while (true) {
-        yield i;
-        i += step;
-    }
-}
-
 export function* cycle(iterable) {
     const saved = [];
     for (const e of iterable) {
@@ -58,6 +50,15 @@ export function* flatMap(iterable, mapping) {
     let i = 0;
     for (const e of iterable) {
         yield* mapping(e, i);
+        i += 1;
+    }
+}
+
+export function* iterate(accumulator, update) {
+    let i = 0;
+    while (true) {
+        yield accumulator;
+        accumulator = update(accumulator, i);
         i += 1;
     }
 }

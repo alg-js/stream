@@ -1,22 +1,3 @@
-/**
- * # @alg/stream
- *
- * Lazy functions for processing iterables.
- *
- * @example
- * ```javascript
- * import * as Stream from "@alg/stream";
- *
- * let value = ["foo", "bar", "baz", "foobar"];
- * value = Stream.takeWhile(value, (e) => e.length <= 3);
- * value = Stream.map(value, (e) => e.toUpperCase());
- * value = Stream.take(value, 2);
- * console.log(...value);  // FOO BAR
- * ```
- *
- * @module stream
- */
-
 // Every day I pray for <https://tc39.es/proposal-type-annotations/>
 
 /**
@@ -25,34 +6,7 @@
 type Predicate<T> = (e: T, i?: number) => boolean;
 type Mapping<T, R> = (e: T, i?: number) => R;
 type Consumer<T> = (e: T, i?: number) => void;
-
-/**
- * Infinitely iterates numbers with the given start and step values
- *
- * @example
- * ```javascript
- * const counter = Stream.count();
- * console.log(...Stream.take(counter, 4));  // 0 1 2 3
- * ```
- * @example
- * ```javascript
- * const counter = Stream.count(5);
- * console.log(...Stream.take(counter, 4));  // 5 6 7 8
- * ```
- * @example
- * ```javascript
- * const counter = Stream.count(4, -1);
- * console.log(...Stream.take(counter, 4));  // 4 3 2 1
- * ```
- *
- * @param {number?} [start=0] The start value of the stream
- * @param {number?} [step=1] The step value of the stream
- * @returns {Iterator<number, never, void>} An infinite iterator
- */
-export function count(
-  start: number,
-  step: number,
-): Iterator<number, never, void>;
+type Update<T> = (e: T, i?: number) => T;
 
 /**
  * Repeatedly yields elements from given iterator indefinitely.
@@ -159,6 +113,28 @@ export function flatMap<T, R>(
   iterable: Iterable<T>,
   mapping: Mapping<T, Iterable<R>>,
 ): Iterator<R>;
+
+/**
+ * Yields a sequence of values starting with the given accumulator.
+ * Each successive element is calculated as
+ * `accumulator = update(accumulator, index)`
+ *
+ * @example
+ * ```javascript
+ * const stream = Stream.iterate(1, (e) => e * 2);
+ * console.log(...Stream.take(stream, 5));  // 1 2 4 8 16
+ * ```
+ *
+ * @template T
+ * @param {T} accumulator A value that will be accumulated
+ * @param {Update<T>} update An update function used to update the
+ *  {@link accumulator}
+ * @returns {Iterator<T>} An infinite iterator of accumulated values
+ */
+export function iterate<T>(
+    accumulator: T,
+    update: Update<T>
+): Iterator<T>
 
 /**
  * Applies the given consumer with each item and yields each value.
