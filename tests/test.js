@@ -1,6 +1,6 @@
 import {assertEquals, assertThrows} from "jsr:@std/assert@1";
 import * as Stream from "../src/main.js";
-import {alph, num, assertIterEquals} from "./utils.js";
+import {alph, assertIterEquals, num} from "./utils.js";
 
 
 Deno.test({
@@ -30,6 +30,11 @@ Deno.test({
 Deno.test({
     name: "Cycle will cycle iterators",
     fn: () => assertIterEquals(Stream.cycle(alph(3)), "abcabcabc", 9),
+});
+
+Deno.test({
+    name: "Cycle yields nothing when cycling an empty iterable",
+    fn: () => assertIterEquals(Stream.cycle([]), []),
 });
 
 Deno.test({
@@ -81,9 +86,12 @@ Deno.test({
 });
 
 Deno.test({
-    name: "Cycle yields nothing when cycling an empty iterable",
-    fn: () => assertIterEquals(Stream.cycle([]), []),
-})
+    name: "DropWhile predicates take an index",
+    fn: () => assertIterEquals(
+        Stream.dropWhile(alph(4), (_, i) => i <= 1),
+        "cd",
+    ),
+});
 
 Deno.test({
     name: "Filtering values in empty iterables yields an empty iterable",
@@ -109,6 +117,14 @@ Deno.test({
 });
 
 Deno.test({
+    name: "Filter predicates take an index",
+    fn: () => assertIterEquals(
+        Stream.filter(alph(6), (_, i) => i % 2 === 0),
+        "ace",
+    ),
+});
+
+Deno.test({
     name: "Flat Mapping values in empty iterables yields an empty iterable",
     fn: () => assertIterEquals(Stream.flatMap([], (_) => alph(3)), []),
 });
@@ -127,6 +143,14 @@ Deno.test({
 });
 
 Deno.test({
+    name: "FlatMap mappings take an index",
+    fn: () => assertIterEquals(
+        Stream.flatMap(alph(3), (_, i) => [i, -i]),
+        [0, 0, 1, -1, 2, -2],
+    ),
+});
+
+Deno.test({
     name: "For each consumes nothing on empty iterables",
     fn: () => [...Stream.peek([], (_) => {
         throw new Error("Bang!");
@@ -134,11 +158,24 @@ Deno.test({
 });
 
 Deno.test({
-    name: "For each consumes elements",
+    name: "Peek consumes elements",
     fn: () => {
         const result = [];
-        [...Stream.peek(num(3), (e) => result.push(e))];
-        assertEquals(result, [0, 1, 2]);
+        assertIterEquals(Stream.peek(alph(3), (e) => result.push(e)), "abc");
+        assertIterEquals(result, "abc");
+    },
+});
+
+
+Deno.test({
+    name: "Peek consumers take an index",
+    fn: () => {
+        const result = [];
+        assertIterEquals(
+            Stream.peek(alph(3), (e, i) => result.push([e, i])),
+            "abc",
+        );
+        assertEquals(result, [["a", 0], ["b", 1], ["c", 2]]);
     },
 });
 
@@ -152,6 +189,14 @@ Deno.test({
 Deno.test({
     name: "Values can be mapped",
     fn: () => assertIterEquals(Stream.map(num(3), (e) => e * 2), [0, 2, 4]),
+});
+
+Deno.test({
+    name: "Map functions take an index",
+    fn: () => assertIterEquals(
+        Stream.map(alph(3), (e, i) => e.repeat(i + 1)),
+        ["a", "bb", "ccc"],
+    ),
 });
 
 Deno.test({
@@ -227,6 +272,14 @@ Deno.test({
     fn: () => assertIterEquals(
         Stream.takeWhile(alph(3), (e) => e !== "c"),
         ["a", "b"],
+    ),
+});
+
+Deno.test({
+    name: "TakeWhile predicates take an index",
+    fn: () => assertIterEquals(
+        Stream.takeWhile(alph(3), (_, i) => i < 2),
+        "ab",
     ),
 });
 
