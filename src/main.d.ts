@@ -81,6 +81,14 @@ export function cycle<T>(
  * Deduplicates items in the given iterable — that is, replaces any contiguous
  * sequences of the same element with only one occurrence of that element.
  *
+ * `options` is an object defining an `eq` function, which defines
+ * equality between two elements. By default, equality is checked first with
+ * strict equality (`===`), and then with a `equals` method if one is
+ * available. Equivalent to:
+ * ```javascript
+ * e1 === e2 || (typeof e1.equals === "function" && e1.equals(e2))
+ * ```
+ *
  * @example
  * ```javascript
  * const data = [1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 3, 3, 3, 2, 2, 1];
@@ -89,16 +97,11 @@ export function cycle<T>(
  *
  * @template T
  * @param {Iterable<T>} iterable An iterable
- * @param {(e1: T, e2: T) => boolean} eq A function to define equality between
- *  two elements. By default, equality is checked first with strict equality
- *  (`===`), and then with a `equals` method if one is available. Equivalent to:
- * ```javascript
- * e1 === e2 || (typeof e1.equals === "function" && e1.equals(e2))
- * ```
+ * @param {{eq: (e1: T, e2: T) => boolean}} options
  */
 export function dedup<T>(
   iterable: Iterable<T>,
-  { eq }?: { eq?: (e1: T, e2: T) => boolean },
+  options?: { eq?: (e1: T, e2: T) => boolean },
 ): Iterator<T>;
 
 /**
@@ -371,13 +374,13 @@ export function takeWhile<T>(
  * @example
  * ```javascript
  * const letters = "abcde";
- * console.log(...Stream.windowed(letters, 3));
+ * console.log(...Stream.window(letters, 3));
  * // ["a", "b", "c"] ["b", "c", "d"] ["c", "d", "e"]
  * ```
  * @example
  * ```javascript
  * const letters = "abcde";
- * console.log([...Stream.windowed(letters, 1000)]);  // []
+ * console.log([...Stream.window(letters, 1000)]);  // []
  * ```
  *
  * @template T
