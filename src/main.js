@@ -1,4 +1,5 @@
 /* @ts-self-types="./main.d.ts" */
+import {equals} from "./utils.js";
 
 /**
  * @template T
@@ -7,6 +8,26 @@
  */
 function iter(iterable) {
     return iterable[Symbol.iterator]();
+}
+
+export function* chain(...iters) {
+    for (const it of iters) {
+        yield* it;
+    }
+}
+
+export function* chunk(iter, size) {
+    if (size === 0) {
+        throw new Error("Cannot yield chunks of size 0");
+    }
+    let arr = [];
+    for (const e of iter) {
+        arr.push(e);
+        if (arr.length === size) {
+            yield arr;
+            arr = [];
+        }
+    }
 }
 
 export function* cycle(iterable) {
@@ -19,6 +40,21 @@ export function* cycle(iterable) {
         while (true) {
             for (const e of saved) {
                 yield e;
+            }
+        }
+    }
+}
+
+export function* dedup(iterable, {eq = equals} = {}) {
+    const it = iter(iterable);
+    const first = it.next();
+    if (!first.done) {
+        yield first.value;
+        let last = first.value;
+        for (const e of it) {
+            if (!eq(e, last)) {
+                yield e;
+                last = e;
             }
         }
     }
@@ -126,7 +162,7 @@ export function* takeWhile(iterable, predicate) {
     }
 }
 
-export function* windowed(iterable, size) {
+export function* window(iterable, size) {
     if (size === 0) {
         throw new Error("Cannot yield sliding windows of size 0");
     }

@@ -1,5 +1,23 @@
 import {assertEquals} from "jsr:@std/assert@1";
 
+class Foo {
+    constructor(value) {
+        this.value = value;
+    }
+
+    equals(other) {
+        return other instanceof Foo && this.value === other.value
+    }
+}
+
+export function toObjects(values) {
+    return values.map((e) => new Foo(e));
+}
+
+export function unwrap(values) {
+    return values.map((e) => e.value);
+}
+
 /**
  * A function that should not be called
  */

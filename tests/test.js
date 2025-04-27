@@ -1,6 +1,82 @@
 import {assertEquals, assertThrows} from "jsr:@std/assert@1";
 import * as Stream from "../src/main.js";
-import {alph, assertIterEquals, bang, num} from "./utils.js";
+import {alph, assertIterEquals, bang, num, toObjects, unwrap} from "./utils.js";
+
+
+Deno.test({
+    name: "Chain will yield an empty iterable, when given empty iterables",
+    fn: () => {
+        assertIterEquals(Stream.chain([]), []);
+        assertIterEquals(Stream.chain([], []), []);
+        assertIterEquals(Stream.chain([], [], []), []);
+    },
+});
+
+Deno.test({
+    name: "Chain will yield an iterable",
+    fn: () => assertIterEquals(Stream.chain(alph(3)), alph(3)),
+});
+
+Deno.test({
+    name: "Chain will yield an iterable padded with empty iterables",
+    fn: () => {
+        assertIterEquals(Stream.chain([], alph(3)), alph(3));
+        assertIterEquals(Stream.chain(alph(3), []), alph(3));
+        assertIterEquals(Stream.chain([], alph(3), []), alph(3));
+    },
+});
+
+Deno.test({
+    name: "Chain will chain multiple iterables",
+    fn: () => assertIterEquals(
+        Stream.chain(alph(3), num(3), ["foo", "bar", "baz"]),
+        [...alph(3), ...num(3), "foo", "bar", "baz"],
+    ),
+});
+
+Deno.test({
+    name: "Chain is lazy",
+    fn: () => {
+        const it1 = alph(3);
+        const it2 = num(3);
+        Stream.chain(it1, it2).next();
+        assertEquals(it1.next().value, "b");
+        Stream.chain(it1, it2).next();
+        Stream.chain(it1, it2).next();
+        assertEquals(it2.next().value, 1);
+    },
+});
+
+Deno.test({
+    name: "Chunk yields nothing for empty iterables",
+    fn: () => assertIterEquals(Stream.chunk([], 1), []),
+});
+
+Deno.test({
+    name: "Chunk yields a single chunk",
+    fn: () => assertIterEquals(Stream.chunk(alph(3), 3), [["a", "b", "c"]]),
+});
+
+Deno.test({
+    name: "Chunk yields multiple chunks",
+    fn: () => assertIterEquals(
+        Stream.chunk(alph(6), 3),
+        [["a", "b", "c"], ["d", "e", "f"]],
+    ),
+});
+
+Deno.test({
+    name: "Chunk discards leftovers",
+    fn: () => assertIterEquals(
+        Stream.chunk(alph(8), 3),
+        [["a", "b", "c"], ["d", "e", "f"]],
+    ),
+});
+
+Deno.test({
+    name: "Chunk throws on 0 chunk size",
+    fn: () => assertThrows(() => Stream.chunk([], 0).next()),
+});
 
 Deno.test({
     name: "Cycle will cycle iterators",
@@ -10,6 +86,32 @@ Deno.test({
 Deno.test({
     name: "Cycle yields nothing when cycling an empty iterable",
     fn: () => assertIterEquals(Stream.cycle([]), []),
+});
+
+Deno.test({
+    name: "Dedup yields nothing when cycling an empty iterable",
+    fn: () => assertIterEquals(Stream.dedup([]), []),
+});
+
+Deno.test({
+    name: "Dedup yields an iterable if it has no duplicates",
+    fn: () => assertIterEquals(Stream.dedup([1, 2, 3, 2, 1]), [1, 2, 3, 2, 1]),
+});
+
+Deno.test({
+    name: "Dedup removes duplicates",
+    fn: () => assertIterEquals(
+        Stream.dedup([1, 2, 2, 3, 3, 3, 4]),
+        [1, 2, 3, 4],
+    ),
+});
+
+Deno.test({
+    name: "Dedup compares objects",
+    fn: () => assertIterEquals(
+        unwrap(Stream.dedup(toObjects([1, 2, 2, 3, 3, 3, 4]))),
+        [1, 2, 3, 4],
+    ),
 });
 
 Deno.test({
@@ -38,6 +140,15 @@ Deno.test({
 });
 
 Deno.test({
+    name: "Drop is lazy",
+    fn: () => {
+        const it = alph(3);
+        Stream.drop(it, 1).next();
+        assertIterEquals(it, "c");
+    },
+});
+
+Deno.test({
     name: "DropWhile yields nothing for empty iterables",
     fn: () => assertIterEquals(Stream.dropWhile([], (_) => true), []),
 });
@@ -58,6 +169,15 @@ Deno.test({
         Stream.dropWhile(alph(3), (e) => e === "a"),
         "bc",
     ),
+});
+
+Deno.test({
+    name: "DropWhile is lazy",
+    fn: () => {
+        const it = alph(3);
+        Stream.dropWhile(it, (e) => e === "a").next();
+        assertIterEquals(it, "c");
+    },
 });
 
 Deno.test({
@@ -89,6 +209,15 @@ Deno.test({
         Stream.filter(num(6), (e) => e % 2 === 0),
         [0, 2, 4],
     ),
+});
+
+Deno.test({
+    name: "Filter is lazy",
+    fn: () => {
+        const it = alph(3);
+        Stream.filter(it, (e) => e !== "a").next();
+        assertEquals(it.next().value, "c");
+    },
 });
 
 Deno.test({
@@ -144,7 +273,16 @@ Deno.test({
 });
 
 Deno.test({
-    name: "For each consumes nothing on empty iterables",
+    name: "FlatMap is lazy",
+    fn: () => {
+        const it = alph(2);
+        Stream.flatMap(it, (e) => [e, e]).next();
+        assertEquals(it.next().value, "b");
+    },
+});
+
+Deno.test({
+    name: "Peek consumes nothing on empty iterables",
     fn: () => [...Stream.peek([], (_) => {
         throw new Error("Bang!");
     })],
@@ -173,6 +311,17 @@ Deno.test({
 });
 
 Deno.test({
+    name: "Peek is lazy",
+    fn: () => {
+        const it = alph(2);
+        const result = [];
+        Stream.peek(it, (e) => result.push(e)).next();
+        assertEquals(it.next().value, "b");
+        assertEquals(result, ["a"]);
+    },
+});
+
+Deno.test({
     name: "Mapping values in empty iterables yields an empty iterable",
     fn: () => assertIterEquals(Stream.filter([], (_) => {
         throw new Error("Bang!");
@@ -182,6 +331,15 @@ Deno.test({
 Deno.test({
     name: "Values can be mapped",
     fn: () => assertIterEquals(Stream.map(num(3), (e) => e * 2), [0, 2, 4]),
+});
+
+Deno.test({
+    name: "Map is lazy",
+    fn: () => {
+        const it = alph(2);
+        Stream.map(it, (e) => e.toUpperCase()).next();
+        assertEquals(it.next().value, "b");
+    },
 });
 
 Deno.test({
@@ -211,7 +369,7 @@ Deno.test({
     name: "Scan accumulates values",
     fn: () => assertIterEquals(
         Stream.scan(alph(4), (a, e) => a + e),
-        ["a", "ab", "abc", "abcd"]
+        ["a", "ab", "abc", "abcd"],
     ),
 });
 
@@ -277,6 +435,15 @@ Deno.test({
 });
 
 Deno.test({
+    name: "take is lazy",
+    fn: () => {
+        const it = alph(3);
+        Stream.take(it, 2).next();
+        assertEquals(it.next().value, "b");
+    },
+});
+
+Deno.test({
     name: "Take while will take nothing from an empty iterator",
     fn: () => assertIterEquals(Stream.takeWhile([], (_) => true), []),
 });
@@ -311,6 +478,15 @@ Deno.test({
 });
 
 Deno.test({
+    name: "TakeWhile is lazy",
+    fn: () => {
+        const it = alph(3);
+        Stream.takeWhile(it, (e) => e !== "b").next();
+        assertEquals(it.next().value, "b");
+    },
+});
+
+Deno.test({
     name: "TakeWhile predicates take an index",
     fn: () => assertIterEquals(
         Stream.takeWhile(alph(3), (_, i) => i < 2),
@@ -321,26 +497,35 @@ Deno.test({
 Deno.test({
     name: "Iterables can be windowed",
     fn: () => {
-        assertIterEquals(Stream.windowed(alph(1), 1), [["a"]]);
-        assertIterEquals(Stream.windowed(alph(2), 1), [["a"], ["b"]]);
-        assertIterEquals(Stream.windowed(alph(2), 2), [["a", "b"]]);
-        assertIterEquals(Stream.windowed(alph(3), 2), [["a", "b"], ["b", "c"]]);
-        assertIterEquals(Stream.windowed(alph(4), 4), [["a", "b", "c", "d"]]);
+        assertIterEquals(Stream.window(alph(1), 1), [["a"]]);
+        assertIterEquals(Stream.window(alph(2), 1), [["a"], ["b"]]);
+        assertIterEquals(Stream.window(alph(2), 2), [["a", "b"]]);
+        assertIterEquals(Stream.window(alph(3), 2), [["a", "b"], ["b", "c"]]);
+        assertIterEquals(Stream.window(alph(4), 4), [["a", "b", "c", "d"]]);
     },
 });
 
 Deno.test({
     name: "Windowed streams with a size greater than the iterable yield nothing",
     fn: () => {
-        assertIterEquals(Stream.windowed(alph(0), 1), []);
-        assertIterEquals(Stream.windowed(alph(4), 5), []);
+        assertIterEquals(Stream.window(alph(0), 1), []);
+        assertIterEquals(Stream.window(alph(4), 5), []);
     },
 });
 
 Deno.test({
     name: "Windowed iterators with a size of 0 throw",
     fn: () => {
-        assertThrows(() => Stream.windowed(alph(5), 0).next());
+        assertThrows(() => Stream.window(alph(5), 0).next());
+    },
+});
+
+Deno.test({
+    name: "Windowed is lazy",
+    fn: () => {
+        const it = alph(3);
+        Stream.window(it, 2).next();
+        assertEquals(it.next().value, "c");
     },
 });
 
@@ -373,4 +558,15 @@ Deno.test({
         Stream.zip(alph(4), num(3)),
         [["a", 0], ["b", 1], ["c", 2]],
     ),
+});
+
+Deno.test({
+    name: "Zip is lazy",
+    fn: () => {
+        const it1 = alph(2);
+        const it2 = num(2);
+        Stream.zip(it1, it2).next();
+        assertEquals(it1.next().value, "b");
+        assertEquals(it2.next().value, 1);
+    },
 });

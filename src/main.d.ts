@@ -22,6 +22,41 @@ type Update<T> = (e: T, i?: number) => T;
 type Accumulator<T, R> = (acc: R, e: T, i?: number) => R;
 
 /**
+ * Chains two or more iterables together
+ *
+ * @example
+ * ```javascript
+ * console.log(...Stream.chain([1, 2, 3], ["a", "b", "c"]));  // 1 2 3 a b c
+ * ```
+ *
+ * @template T
+ * @param {...Iterable<T>} iterables one or more iterables
+ * @returns {Iterator<T>} The values from the given iterables chained together
+ */
+export function chain<T>(
+  ...iterables: Iterable<T>[]
+): Iterator<T>;
+
+/**
+ * Splits the given iterable into arrays of the given size. Drops any dangling
+ * elements.
+ *
+ * @example
+ * ```javascript
+ * console.log(...Stream.chunk([1, 2, 3, 4, 5], 2);  // [1, 2] [3, 4]
+ * ```
+ *
+ * @template T
+ * @param {Iterable<T>} iterable An iterable
+ * @param {number} size The size of the chunk window
+ * @returns {Iterator<T[]>} Chunks of the given size
+ */
+export function chunk<T>(
+  iterable: Iterable<T>,
+  size: number,
+): Iterator<T[]>;
+
+/**
  * Repeatedly yields elements from given iterator indefinitely.
  *
  * Note: O(n) auxiliary space — where n is the size of the given iterable.
@@ -40,6 +75,30 @@ type Accumulator<T, R> = (acc: R, e: T, i?: number) => R;
  */
 export function cycle<T>(
   iterable: Iterable<T>,
+): Iterator<T>;
+
+/**
+ * Deduplicates items in the given iterable — that is, replaces any contiguous
+ * sequences of the same element with only one occurrence of that element.
+ *
+ * @example
+ * ```javascript
+ * const data = [1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 3, 3, 3, 2, 2, 1];
+ * console.log(...Stream.dedup(data));  // 1 2 3 4 3 2 1
+ * ```
+ *
+ * @template T
+ * @param {Iterable<T>} iterable An iterable
+ * @param {(e1: T, e2: T) => boolean} eq A function to define equality between
+ *  two elements. By default, equality is checked first with strict equality
+ *  (`===`), and then with a `equals` method if one is available. Equivalent to:
+ * ```javascript
+ * e1 === e2 || (typeof e1.equals === "function" && e1.equals(e2))
+ * ```
+ */
+export function dedup<T>(
+  iterable: Iterable<T>,
+  { eq }?: { eq?: (e1: T, e2: T) => boolean },
 ): Iterator<T>;
 
 /**
@@ -327,7 +386,7 @@ export function takeWhile<T>(
  * @returns {Iterator<ArrayLike<T>>} An iterator of windows
  * @throws {Error} if the given size is 0
  */
-export function windowed<T>(
+export function window<T>(
   iterable: Iterable<T>,
   size: number,
 ): Iterator<ArrayLike<T>>;
