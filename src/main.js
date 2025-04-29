@@ -1,5 +1,4 @@
 /* @ts-self-types="./main.d.ts" */
-import {equals} from "./utils.js";
 
 /**
  * @template T
@@ -45,7 +44,7 @@ export function* cycle(iterable) {
     }
 }
 
-export function* dedup(iterable, {eq = equals} = {}) {
+export function* dedup(iterable, {eq = (left, right) => left === right} = {}) {
     const it = iter(iterable);
     const first = it.next();
     if (!first.done) {
@@ -99,6 +98,10 @@ export function* iterate(accumulator, update) {
     }
 }
 
+export function map(iterable, mapping) {
+    return iter(iterable).map(mapping);
+}
+
 export function* peek(iterable, consumer) {
     let i = 0;
     for (const e of iterable) {
@@ -106,10 +109,6 @@ export function* peek(iterable, consumer) {
         yield e;
         i += 1;
     }
-}
-
-export function map(iterable, mapping) {
-    return iter(iterable).map(mapping);
 }
 
 export function* repeat(object, times) {
@@ -129,16 +128,16 @@ export function* scan(iterable, accumulator, initial) {
     const it = iter(iterable);
     if (initial !== undefined) {
         acc = initial;
-        i = 0
+        i = 0;
     } else {
-        const first = it.next()
+        const first = it.next();
         if (first.done) {
             return;
         }
         acc = first.value;
         i = 1;
+        yield acc;
     }
-    yield acc;
     for (const e of it) {
         acc = accumulator(acc, e, i);
         yield acc;

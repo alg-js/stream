@@ -79,6 +79,16 @@ Deno.test({
 });
 
 Deno.test({
+    name: "Chunk is lazy",
+    fn: () => {
+        const it = alph(5);
+        const stream = Stream.chunk(it, 2);
+        assertEquals(stream.next().value, ["a", "b"]);
+        assertEquals(it.next().value, "c");
+    },
+});
+
+Deno.test({
     name: "Cycle will cycle iterators",
     fn: () => assertIterEquals(Stream.cycle(alph(3)), "abcabcabc", 9),
 });
@@ -109,9 +119,24 @@ Deno.test({
 Deno.test({
     name: "Dedup compares objects",
     fn: () => assertIterEquals(
-        unwrap(Stream.dedup(toObjects([1, 2, 2, 3, 3, 3, 4]))),
+        unwrap(Stream.dedup(
+            toObjects([1, 2, 2, 3, 3, 3, 4]),
+            {eq: (l, r) => l.equals(r)},
+        )),
         [1, 2, 3, 4],
     ),
+});
+
+Deno.test({
+    name: "Dedup is lazy",
+    fn: () => {
+        const it = [1, 1, 1, 1, 2, 3][Symbol.iterator]();
+        const stream = Stream.dedup(it);
+        assertEquals(stream.next().value, 1);
+        assertEquals(it.next().value, 1);
+        assertEquals(stream.next().value, 2);
+        assertEquals(it.next().value, 3);
+    },
 });
 
 Deno.test({
@@ -282,10 +307,35 @@ Deno.test({
 });
 
 Deno.test({
+    name: "Mapping values in empty iterables yields an empty iterable",
+    fn: () => assertIterEquals(Stream.map([], bang), []),
+});
+
+Deno.test({
+    name: "Values can be mapped",
+    fn: () => assertIterEquals(Stream.map(num(3), (e) => e * 2), [0, 2, 4]),
+});
+
+Deno.test({
+    name: "Map is lazy",
+    fn: () => {
+        const it = alph(2);
+        Stream.map(it, (e) => e.toUpperCase()).next();
+        assertEquals(it.next().value, "b");
+    },
+});
+
+Deno.test({
+    name: "Map functions take an index",
+    fn: () => assertIterEquals(
+        Stream.map(alph(3), (e, i) => e.repeat(i + 1)),
+        ["a", "bb", "ccc"],
+    ),
+});
+
+Deno.test({
     name: "Peek consumes nothing on empty iterables",
-    fn: () => [...Stream.peek([], (_) => {
-        throw new Error("Bang!");
-    })],
+    fn: () => [...Stream.peek([], bang)],
 });
 
 Deno.test({
@@ -322,32 +372,23 @@ Deno.test({
 });
 
 Deno.test({
-    name: "Mapping values in empty iterables yields an empty iterable",
-    fn: () => assertIterEquals(Stream.filter([], (_) => {
-        throw new Error("Bang!");
-    }), []),
-});
-
-Deno.test({
-    name: "Values can be mapped",
-    fn: () => assertIterEquals(Stream.map(num(3), (e) => e * 2), [0, 2, 4]),
-});
-
-Deno.test({
-    name: "Map is lazy",
+    name: "Repeat will repeat an object indefinitely",
     fn: () => {
-        const it = alph(2);
-        Stream.map(it, (e) => e.toUpperCase()).next();
-        assertEquals(it.next().value, "b");
+        const s = Stream.take(Stream.repeat("a"), 100);
+        for (const e of s) {
+            assertEquals(e, "a");
+        }
     },
 });
 
 Deno.test({
-    name: "Map functions take an index",
-    fn: () => assertIterEquals(
-        Stream.map(alph(3), (e, i) => e.repeat(i + 1)),
-        ["a", "bb", "ccc"],
-    ),
+    name: "Repeat will repeat an object n times",
+    fn: () => assertIterEquals(Stream.repeat("a", 4), ["a", "a", "a", "a"]),
+});
+
+Deno.test({
+    name: "Repeat will repeat an object 0 times",
+    fn: () => assertIterEquals(Stream.repeat("a", 0), []),
 });
 
 Deno.test({
@@ -356,8 +397,8 @@ Deno.test({
 });
 
 Deno.test({
-    name: "Scan yields the initial value when given",
-    fn: () => assertIterEquals(Stream.scan([], bang, "a"), ["a"]),
+    name: "Scan does not yield the initial value when given",
+    fn: () => assertIterEquals(Stream.scan([], bang, "a"), []),
 });
 
 Deno.test({
@@ -385,28 +426,18 @@ Deno.test({
     name: "Scan accumulator index is adjusted for initial values",
     fn: () => assertIterEquals(
         Stream.scan(alph(4), (a, e, i) => a + e + i, "X"),
-        ["X", "Xa0", "Xa0b1", "Xa0b1c2", "Xa0b1c2d3"],
+        ["Xa0", "Xa0b1", "Xa0b1c2", "Xa0b1c2d3"],
     ),
 });
 
 Deno.test({
-    name: "Repeat will repeat an object indefinitely",
+    name: "Scan is lazy",
     fn: () => {
-        const s = Stream.take(Stream.repeat("a"), 100);
-        for (const e of s) {
-            assertEquals(e, "a");
-        }
+        const it = alph(2);
+        const stream = Stream.scan(it, (a, e, i) => a + e + i);
+        assertEquals(stream.next().value, "a");
+        assertEquals(it.next().value, "b");
     },
-});
-
-Deno.test({
-    name: "Repeat will repeat an object n times",
-    fn: () => assertIterEquals(Stream.repeat("a", 4), ["a", "a", "a", "a"]),
-});
-
-Deno.test({
-    name: "Repeat will repeat an object 0 times",
-    fn: () => assertIterEquals(Stream.repeat("a", 0), []),
 });
 
 Deno.test({

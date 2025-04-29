@@ -3,23 +3,23 @@
 /**
  * A function that returns a truthy or falsy value
  */
-type Predicate<T> = (e: T, i?: number) => boolean;
+export type Predicate<T> = (e: T, i?: number) => boolean;
 /**
  * A function that maps the given value
  */
-type Mapping<T, R> = (e: T, i?: number) => R;
+export type Mapping<T, R> = (e: T, i?: number) => R;
 /**
  * A function that performs some operation and returns nothing
  */
-type Consumer<T> = (e: T, i?: number) => void;
+export type Consumer<T> = (e: T, i?: number) => void;
 /**
  * A function that updates the given value
  */
-type Update<T> = (e: T, i?: number) => T;
+export type Update<T> = (e: T, i?: number) => T;
 /**
  * A function that accumulates values
  */
-type Accumulator<T, R> = (acc: R, e: T, i?: number) => R;
+export type Accumulator<T, R> = (acc: R, e: T, i?: number) => R;
 
 /**
  * Chains two or more iterables together
@@ -43,7 +43,7 @@ export function chain<T>(
  *
  * @example
  * ```javascript
- * console.log(...Stream.chunk([1, 2, 3, 4, 5], 2);  // [1, 2] [3, 4]
+ * console.log(...Stream.chunk([1, 2, 3, 4, 5], 2));  // [1, 2] [3, 4]
  * ```
  *
  * @template T
@@ -81,13 +81,8 @@ export function cycle<T>(
  * Deduplicates items in the given iterable — that is, replaces any contiguous
  * sequences of the same element with only one occurrence of that element.
  *
- * `options` is an object defining an `eq` function, which defines
- * equality between two elements. By default, equality is checked first with
- * strict equality (`===`), and then with a `equals` method if one is
- * available. Equivalent to:
- * ```javascript
- * e1 === e2 || (typeof e1.equals === "function" && e1.equals(e2))
- * ```
+ * `options` is an object defining an `eq` function that takes two parameters
+ * and determines equality. Uses strict equality by default.
  *
  * @example
  * ```javascript
@@ -217,9 +212,10 @@ export function iterate<T>(
  * @example
  * ```javascript
  * const data = ["a", "b", "c"];
- * const duplicate = (e, i) => e.repeat(i + 1)
+ * const duplicate = (e, i) => e.repeat(i + 1);
  * console.log(...Stream.map(data, duplicate));  // a bb ccc
  * ```
+ *
  * @template T
  * @template R
  * @param {Iterable<T>} iterable An iterable
@@ -291,12 +287,13 @@ export function repeat<T>(
 
 /**
  * Scans the given iterable, accumulating and yielding a result for each value.
- * The first value of the iterable is used as the initial accumulator value.
+ * The first value of the iterable is yielded and used as the initial
+ * accumulator value.
  *
  * @example
  * ```javascript
- * const data = [1, 4, 1, 5];
- * console.log(...Stream.scan(data, (a, e) => a + e, 3));  // 3 4 8 9 14
+ * const data = [3, 1, 4, 1, 5];
+ * console.log(...Stream.scan(data, (a, e) => a + e));  // 3 4 8 9 14
  * ```
  *
  * @template T
