@@ -5,7 +5,7 @@
 
 Lazy functions for Iterables.
 
-See [@alg/enum](https://jsr.io/@alg/enum) for lazily evaluated functions.
+See [@alg/enum](https://jsr.io/@alg/enum) for eagerly evaluated functions.
 
 ## Install
 
