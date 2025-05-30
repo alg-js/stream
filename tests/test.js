@@ -1,3 +1,18 @@
+/* Copyright 2025 James Finnie-Ansley
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import {assertEquals, assertThrows} from "jsr:@std/assert@1";
 import * as Stream from "../src/main.js";
 import {alph, assertIterEquals, bang, num, toObjects, unwrap} from "./utils.js";
@@ -74,8 +89,11 @@ Deno.test({
 });
 
 Deno.test({
-    name: "Chunk throws on 0 chunk size",
-    fn: () => assertThrows(() => Stream.chunk([], 0).next()),
+    name: "Chunk throws on <= 0 chunk size",
+    fn: () => {
+        assertThrows(() => Stream.chunk([], 0));
+        assertThrows(() => Stream.chunk([], -1));
+    },
 });
 
 Deno.test({
@@ -170,6 +188,14 @@ Deno.test({
         const it = alph(3);
         Stream.drop(it, 1).next();
         assertIterEquals(it, "c");
+    },
+});
+
+Deno.test({
+    name: "Drop throws on < 0 limit",
+    fn: () => {
+        assertThrows(() => Stream.drop([], -2));
+        assertThrows(() => Stream.drop([], -1));
     },
 });
 
@@ -474,6 +500,15 @@ Deno.test({
     },
 });
 
+
+Deno.test({
+    name: "Take throws on < 0 limit",
+    fn: () => {
+        assertThrows(() => Stream.take([], -2));
+        assertThrows(() => Stream.take([], -1));
+    },
+});
+
 Deno.test({
     name: "Take while will take nothing from an empty iterator",
     fn: () => assertIterEquals(Stream.takeWhile([], (_) => true), []),
@@ -545,9 +580,10 @@ Deno.test({
 });
 
 Deno.test({
-    name: "Windowed iterators with a size of 0 throw",
+    name: "Windowed iterators with a size of <= 0 throw",
     fn: () => {
-        assertThrows(() => Stream.window(alph(5), 0).next());
+        assertThrows(() => Stream.window(alph(5), 0));
+        assertThrows(() => Stream.window(alph(5), -1));
     },
 });
 

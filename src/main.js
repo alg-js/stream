@@ -1,3 +1,18 @@
+/* Copyright 2025 James Finnie-Ansley
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /* @ts-self-types="./main.d.ts" */
 
 /**
@@ -15,18 +30,20 @@ export function* chain(...iters) {
     }
 }
 
-export function* chunk(iter, size) {
-    if (size === 0) {
-        throw new Error("Cannot yield chunks of size 0");
+export function chunk(iter, size) {
+    if (size <= 0) {
+        throw new Error("Cannot yield chunks of size <= 0");
     }
-    let arr = [];
-    for (const e of iter) {
-        arr.push(e);
-        if (arr.length === size) {
-            yield arr;
-            arr = [];
+    return (function* () {
+        let arr = [];
+        for (const e of iter) {
+            arr.push(e);
+            if (arr.length === size) {
+                yield arr;
+                arr = [];
+            }
         }
-    }
+    })();
 }
 
 export function* cycle(iterable) {
@@ -60,7 +77,11 @@ export function* dedup(iterable, {eq = (left, right) => left === right} = {}) {
 }
 
 export function drop(iterable, limit) {
-    return iter(iterable).drop(limit);
+    if (limit < 0) {
+        throw Error("Cannot drop < 0 items");
+    } else {
+        return iter(iterable).drop(limit);
+    }
 }
 
 export function* dropWhile(iterable, predicate) {
@@ -146,7 +167,11 @@ export function* scan(iterable, accumulator, initial) {
 }
 
 export function take(iterable, limit) {
-    return iter(iterable).take(limit);
+    if (limit < 0 ) {
+        throw Error("Cannot take < 0 items");
+    } else {
+        return iter(iterable).take(limit);
+    }
 }
 
 export function* takeWhile(iterable, predicate) {
@@ -161,22 +186,24 @@ export function* takeWhile(iterable, predicate) {
     }
 }
 
-export function* window(iterable, size) {
-    if (size === 0) {
-        throw new Error("Cannot yield sliding windows of size 0");
+export function window(iterable, size) {
+    if (size <= 0) {
+        throw new Error("Cannot yield sliding windows of size <= 0");
     }
-    const it = iter(iterable);
-    const arr = [...take(it, size)];
-    if (arr.length < size) {
-        return;
-    }
-    yield [...arr];
-    let front = 0;
-    for (const e of it) {
-        arr[front] = e;
-        front = (front + 1) % size;
-        yield arr.slice(front).concat(arr.slice(0, front));
-    }
+    return (function* () {
+        const it = iter(iterable);
+        const arr = [...take(it, size)];
+        if (arr.length < size) {
+            return;
+        }
+        yield [...arr];
+        let front = 0;
+        for (const e of it) {
+            arr[front] = e;
+            front = (front + 1) % size;
+            yield arr.slice(front).concat(arr.slice(0, front));
+        }
+    })();
 }
 
 export function* zip(...iterables) {

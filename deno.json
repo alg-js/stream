@@ -1,17 +1,17 @@
 {
   "name": "@alg/stream",
-  "version": "0.0.8",
-  "license": "MIT",
-  "exports": "./src/main.js",
+  "version": "0.0.9",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/main.js",
+    "./types": "./src/types.d.ts"
+  },
   "lock": false,
   "publish": {
     "include": [
       "LICENSE",
       "README.md",
       "src/**"
-    ],
-    "exclude": [
-      "tests/**"
     ]
   }
 }

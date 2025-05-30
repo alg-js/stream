@@ -1,7 +1,7 @@
 # @alg/stream
 
 [![JSR](https://jsr.io/badges/@alg/stream)](https://jsr.io/@alg/stream)
-[![License](https://img.shields.io/badge/MIT-green?label=license)](https://github.com/alg-js/stream/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/Apache--2.0-green?label=license)](https://github.com/alg-js/stream/blob/main/LICENSE)
 
 Lazy functions for Iterables.
 
