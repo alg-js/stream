@@ -30,7 +30,7 @@ export function* chain(...iters) {
     }
 }
 
-export function chunk(iter, size) {
+export function chunk(iter, size, {strategy = "dropEnd"} = {}) {
     if (size <= 0) {
         throw new Error("Cannot yield chunks of size <= 0");
     }
@@ -42,6 +42,11 @@ export function chunk(iter, size) {
                 yield arr;
                 arr = [];
             }
+        }
+        if (strategy === "keepEnd" && arr.length !== 0) {
+            yield arr;
+        } else if (strategy === "strict" && arr.length !== 0) {
+            throw Error("Incomplete chunk");
         }
     })();
 }
@@ -167,7 +172,7 @@ export function* scan(iterable, accumulator, initial) {
 }
 
 export function take(iterable, limit) {
-    if (limit < 0 ) {
+    if (limit < 0) {
         throw Error("Cannot take < 0 items");
     } else {
         return iter(iterable).take(limit);
@@ -206,8 +211,31 @@ export function window(iterable, size) {
     })();
 }
 
-export function* zip(...iterables) {
-    iterables = iterables.map(iter);
+
+export function zip(...args) {
+    let options;
+    let iterables;
+    const last = args.at(-1);
+    if (typeof last === "object" && last !== null && "strategy" in last) {
+        options = last;
+        iterables = args.slice(0, -1).map(iter);
+    } else {
+        options = {strategy: "shortest"};
+        iterables = args.map(iter);
+    }
+    switch (options["strategy"]) {
+        case "shortest":
+            return zipShortest(iterables);
+        case "longest":
+            return zipLongest(iterables, options["fillValue"]);
+        case "strict":
+            return zipStrict(iterables);
+        default:
+            throw Error(`Unrecognised strategy: "${options}"`);
+    }
+}
+
+function* zipShortest(iterables) {
     while (true) {
         const result = [];
         for (const iter of iterables) {
@@ -218,5 +246,50 @@ export function* zip(...iterables) {
             result.push(next.value);
         }
         yield result;
+    }
+}
+
+function* zipLongest(iterables, fillValue) {
+    while (true) {
+        const result = [];
+        let done = 0;
+        for (const iter of iterables) {
+            const next = iter.next();
+            if (next.done) {
+                result.push(fillValue);
+                done += 1;
+            } else {
+                result.push(next.value);
+            }
+        }
+        if (done === iterables.length) {
+            return;
+        } else {
+            yield result;
+        }
+    }
+}
+
+function* zipStrict(iterables) {
+    while (true) {
+        const result = [];
+        let done = 0;
+        for (const iter of iterables) {
+            const next = iter.next();
+            if (next.done) {
+                done += 1;
+            } else {
+                result.push(next.value);
+            }
+        }
+        if (done === 0) {
+            yield result;
+        } else if (done === iterables.length) {
+            return;
+        } else {
+            throw Error(
+                "Zipped iterables of unequal length with strategy = strict",
+            );
+        }
     }
 }

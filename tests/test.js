@@ -74,18 +74,64 @@ Deno.test({
 
 Deno.test({
     name: "Chunk yields multiple chunks",
-    fn: () => assertIterEquals(
-        Stream.chunk(alph(6), 3),
-        [["a", "b", "c"], ["d", "e", "f"]],
-    ),
+    fn: () => {
+        assertIterEquals(
+            Stream.chunk(alph(6), 3),
+            [["a", "b", "c"], ["d", "e", "f"]],
+        );
+        assertIterEquals(
+            Stream.chunk(alph(6), 3, {strategy: "keepEnd"}),
+            [["a", "b", "c"], ["d", "e", "f"]],
+        );
+        assertIterEquals(
+            Stream.chunk(alph(6), 3, {strategy: "strict"}),
+            [["a", "b", "c"], ["d", "e", "f"]],
+        );
+    },
 });
 
 Deno.test({
     name: "Chunk discards leftovers",
-    fn: () => assertIterEquals(
-        Stream.chunk(alph(8), 3),
-        [["a", "b", "c"], ["d", "e", "f"]],
-    ),
+    fn: () => {
+        assertIterEquals(
+            Stream.chunk(alph(8), 3),
+            [["a", "b", "c"], ["d", "e", "f"]],
+        );
+        assertIterEquals(
+            Stream.chunk(alph(8), 3, {strategy: "dropEnd"}),
+            [["a", "b", "c"], ["d", "e", "f"]],
+        );
+    },
+});
+
+Deno.test({
+    name: "Chunk keeps leftovers with `keepEnd`",
+    fn: () => {
+        assertIterEquals(
+            Stream.chunk(alph(10), 3, {strategy: "keepEnd"}),
+            [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"], ["j"]],
+        );
+        assertIterEquals(
+            Stream.chunk(alph(8), 3, {strategy: "keepEnd"}),
+            [["a", "b", "c"], ["d", "e", "f"], ["g", "h"]],
+        );
+    },
+});
+
+Deno.test({
+    name: "Chunk throws with `strict`",
+    fn: () => {
+        const it = Stream.chunk(alph(10), 3, {strategy: "strict"});
+        assertEquals(it.next().value, ["a", "b", "c"]);
+        assertEquals(it.next().value, ["d", "e", "f"]);
+        assertEquals(it.next().value, ["g", "h", "i"]);
+        assertThrows(() => it.next());
+
+        const it1 = Stream.chunk(alph(8), 3, {strategy: "strict"});
+        assertEquals(it1.next().value, ["a", "b", "c"]);
+        assertEquals(it1.next().value, ["d", "e", "f"]);
+        assertThrows(() => it1.next());
+    },
 });
 
 Deno.test({
@@ -621,10 +667,59 @@ Deno.test({
 
 Deno.test({
     name: "Zip stops on the shortest iterator",
+    fn: () => {
+        assertIterEquals(
+            Stream.zip(alph(4), num(3)),
+            [["a", 0], ["b", 1], ["c", 2]],
+        );
+        assertIterEquals(
+            Stream.zip(alph(4), num(3), {strategy: "shortest"}),
+            [["a", 0], ["b", 1], ["c", 2]],
+        );
+    },
+});
+
+Deno.test({
+    name: "Zip stops on the longest iterator with strategy longest",
+    fn: () => {
+        assertIterEquals(
+            Stream.zip(alph(4), num(3), {strategy: "longest"}),
+            [["a", 0], ["b", 1], ["c", 2], ["d", undefined]],
+        );
+        assertIterEquals(
+            Stream.zip(alph(4), num(3), {
+                strategy: "longest",
+                fillValue: "foo",
+            }),
+            [["a", 0], ["b", 1], ["c", 2], ["d", "foo"]],
+        );
+    },
+});
+
+Deno.test({
+    name: "Zip throws on uneven iterators with strategy strict",
+    fn: () => {
+        const it = Stream.zip(alph(4), num(3), {strategy: "strict"});
+        assertEquals(it.next().value, ["a", 0]);
+        assertEquals(it.next().value, ["b", 1]);
+        assertEquals(it.next().value, ["c", 2]);
+        assertThrows(() => it.next());
+    },
+});
+
+Deno.test({
+    name: "Zip yields even iterators with strategy strict",
     fn: () => assertIterEquals(
-        Stream.zip(alph(4), num(3)),
+        Stream.zip(alph(3), num(3), {strategy: "strict"}),
         [["a", 0], ["b", 1], ["c", 2]],
     ),
+});
+
+Deno.test({
+    name: "Zip throws on unrecognised strategy",
+    fn: () => {
+        assertThrows(() => Stream.zip(alph(4), num(3), {strategy: "foo"}));
+    },
 });
 
 Deno.test({

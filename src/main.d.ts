@@ -49,11 +49,14 @@ export function chain<T>(
  * @template T
  * @param {Iterable<T>} iterable An iterable
  * @param {number} size The size of the chunk window
+ * @param {Object} options
+ * @param {"dropEnd" | "keepEnd" | "strict"} options.strategy
  * @returns {Iterator<T[]>} Chunks of the given size
  */
 export function chunk<T>(
   iterable: Iterable<T>,
   size: number,
+  options?: { strategy: "dropEnd" | "keepEnd" | "strict" },
 ): Iterator<T[]>;
 
 /**
@@ -406,6 +409,65 @@ export function window<T>(
  * // [0, "a", "foo"] [1, "b", "bar"] [2, "c", "baz"]
  * ```
  */
-export function zip<T>(
-  ...iterables: Iterable<T>[]
-): Iterator<ArrayLike<T>>;
+export function zip(
+  ...args: Iterable<unknown>[]
+): Iterable<ArrayLike<unknown>>;
+
+/**
+ * Zips the given iterables with the given zipping strategy.
+ *
+ * The strategy can be one of:
+ * - `shortest`: stops when the shortest iterable has been consumed
+ * - `longest`: continues yielding elements until all iterables have been
+ * consumed. A `fillValue` can be provided to be used as the default value for
+ * consumed iterables. By default, `fillValue is undefined`
+ * - `strict`: throws if any iterables are of uneven length
+ *
+ * @example shortest
+ * ```javascript
+ * const nums = [0, 1, 2, 3, 4];
+ * const alph = "abcd";
+ * const foos = ["foo", "bar", "baz"];
+ *
+ * console.log(...Stream.zip(nums, alph, foos, {strategy: "shortest"}));
+ * // [0, "a", "foo"] [1, "b", "bar"] [2, "c", "baz"]
+ * ```
+ *
+ * @example longest
+ * ```javascript
+ * const nums = [0, 1, 2, 3];
+ * const alph = "abc";
+ * const foos = ["foo", "bar"];
+ *
+ * const zipped = Stream.zip(
+ *     nums, alph, foos,
+ *     {strategy: "longest", fillValue: "X"},
+ * );
+ * console.log(...zipped);
+ * // [0, "a", "foo"] [1, "b", "bar"] [2, "c", "X"] [3, "X", "X"]
+ * ```
+ *
+ * @example strict
+ * ```javascript
+ * const nums = [0, 1, 2, 3, 4];
+ * const alph = "abcd";
+ * const foos = ["foo", "bar", "baz"];
+ *
+ * const zipped = Stream.zip(nums, alph, foos, {strategy: "strict"});
+ * try {
+ *     console.log(...zipped);
+ * } catch (e) {
+ *     // Error: Zipped iterables of unequal length with strategy = strict
+ *     console.log(e.toString());
+ * }
+ * ```
+ */
+export function zip(
+  ...args: [
+    ...Iterable<unknown>[],
+    {
+        strategy: "shortest" | "longest" | "strict",
+        fillValue?: unknown,
+    },
+  ]
+): Iterable<ArrayLike<unknown>>;
