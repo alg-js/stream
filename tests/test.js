@@ -105,6 +105,24 @@ Deno.test({
 });
 
 Deno.test({
+    name: "Chunk pads leftovers",
+    fn: () => {
+        assertIterEquals(
+            Stream.chunk(alph(8), 3, {strategy: "padEnd"}),
+            [["a", "b", "c"], ["d", "e", "f"], ["g", "h", undefined]],
+        );
+        assertIterEquals(
+            Stream.chunk(alph(9), 3, {strategy: "padEnd"}),
+            [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]],
+        );
+        assertIterEquals(
+            Stream.chunk(alph(8), 3, {strategy: "padEnd", fillValue: "X"}),
+            [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "X"]],
+        );
+    },
+});
+
+Deno.test({
     name: "Chunk keeps leftovers with `keepEnd`",
     fn: () => {
         assertIterEquals(

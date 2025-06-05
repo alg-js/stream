@@ -14,11 +14,11 @@
  */
 
 import type {
-  Accumulator,
-  Consumer,
-  Mapping,
-  Predicate,
-  Update,
+    Accumulator,
+    Consumer,
+    Mapping,
+    Predicate,
+    Update,
 } from "./types.d.ts";
 
 /**
@@ -34,29 +34,62 @@ import type {
  * @returns {Iterator<T>} The values from the given iterables chained together
  */
 export function chain<T>(
-  ...iterables: Iterable<T>[]
+    ...iterables: Iterable<T>[]
 ): Iterator<T>;
 
 /**
- * Splits the given iterable into arrays of the given size. Drops any dangling
- * elements.
+ * Splits the given iterable into arrays of the given size.
  *
- * @example
+ * There are four strategies to deal with unfilled chunks at the end of the
+ * given iterable:
+ * - `dropEnd` (default): If the last chunk has fewer than `size` items, it
+ * is dropped
+ * - `keepEnd`: If the last chunk has fewer than `size` items, it is yielded
+ * as is
+ * - `padEnd`: If the last chunk has fewer than `size` items, it is padded with
+ * the given `fillValue` (`undefined` by default)
+ * - `strict`: If the last chunk has fewer than `size` items an error is thrown
+ *
+ * @example default / drop end
  * ```javascript
  * console.log(...Stream.chunk([1, 2, 3, 4, 5], 2));  // [1, 2] [3, 4]
+ * ```
+ * @example keep end
+ * ```javascript
+ * const chunks = Stream.chunk([1, 2, 3, 4, 5], 2, {strategy: "dropEnd"});
+ * console.log(...chunks);  // [1, 2] [3, 4] [5]
+ * ```
+ * @example pad end
+ * ```javascript
+ * const data = [1, 2, 3, 4, 5]
+ * const chunks = Stream.chunk(data, 2, {strategy: "padEnd", fillValue: 999});
+ * console.log(...chunks);  // [1, 2] [3, 4] [5, 999]
+ * ```
+ * @example strict
+ * ```javascript
+ * const chunks = Stream.chunk([1, 2, 3, 4, 5], 2, {strategy: "strict"});
+ * try {
+ *     console.log(...chunks);
+ * } catch (e) {
+ *     console.log(e.toString());  // Error: Incomplete chunk
+ * }
  * ```
  *
  * @template T
  * @param {Iterable<T>} iterable An iterable
  * @param {number} size The size of the chunk window
  * @param {Object} options
- * @param {"dropEnd" | "keepEnd" | "strict"} options.strategy
+ * @param {"dropEnd" | "keepEnd" | "padEnd" | "strict"} options.strategy
+ * @param {T} options.fillValue
  * @returns {Iterator<T[]>} Chunks of the given size
  */
 export function chunk<T>(
-  iterable: Iterable<T>,
-  size: number,
-  options?: { strategy: "dropEnd" | "keepEnd" | "strict" },
+    iterable: Iterable<T>,
+    size: number,
+    options?: {
+        strategy: "dropEnd" | "keepEnd" | "padEnd" | "strict";
+        fillValue?: T;
+    },
 ): Iterator<T[]>;
 
 /**
@@ -77,7 +110,7 @@ export function chunk<T>(
  *  iterable is empty
  */
 export function cycle<T>(
-  iterable: Iterable<T>,
+    iterable: Iterable<T>,
 ): Iterator<T>;
 
 /**
@@ -98,8 +131,8 @@ export function cycle<T>(
  * @param {{eq: (e1: T, e2: T) => boolean}} options
  */
 export function dedup<T>(
-  iterable: Iterable<T>,
-  options?: { eq?: (e1: T, e2: T) => boolean },
+    iterable: Iterable<T>,
+    options?: { eq?: (e1: T, e2: T) => boolean },
 ): Iterator<T>;
 
 /**
@@ -121,8 +154,8 @@ export function dedup<T>(
  *  @throws {Error} when limit < 0
  */
 export function drop<T>(
-  iterable: Iterable<T>,
-  limit: number,
+    iterable: Iterable<T>,
+    limit: number,
 ): Iterator<T>;
 
 /**
@@ -143,8 +176,8 @@ export function drop<T>(
  *  not satisfy the given predicate
  */
 export function dropWhile<T>(
-  iterable: Iterable<T>,
-  predicate: Predicate<T>,
+    iterable: Iterable<T>,
+    predicate: Predicate<T>,
 ): Iterator<T>;
 
 /**
@@ -162,8 +195,8 @@ export function dropWhile<T>(
  * @returns {Iterator<T>} All values that satisfy the given predicate
  */
 export function filter<T>(
-  iterable: Iterable<T>,
-  predicate: Predicate<T>,
+    iterable: Iterable<T>,
+    predicate: Predicate<T>,
 ): Iterable<T>;
 
 /**
@@ -184,8 +217,8 @@ export function filter<T>(
  * @returns {Iterator<R>} the results of the mapping function flattened
  */
 export function flatMap<T, R>(
-  iterable: Iterable<T>,
-  mapping: Mapping<T, Iterable<R>>,
+    iterable: Iterable<T>,
+    mapping: Mapping<T, Iterable<R>>,
 ): Iterator<R>;
 
 /**
@@ -206,8 +239,8 @@ export function flatMap<T, R>(
  * @returns {Iterator<T>} An infinite iterator of accumulated values
  */
 export function iterate<T>(
-  accumulator: T,
-  update: Update<T>,
+    accumulator: T,
+    update: Update<T>,
 ): Iterator<T>;
 
 /**
@@ -228,8 +261,8 @@ export function iterate<T>(
  * @returns {Iterator<R>} The items from {@link iterable} mapped.
  */
 export function map<T, R>(
-  iterable: Iterable<T>,
-  mapping: Mapping<T, R>,
+    iterable: Iterable<T>,
+    mapping: Mapping<T, R>,
 ): Iterator<R>;
 
 /**
@@ -249,8 +282,8 @@ export function map<T, R>(
  * @returns {Iterator<T>} The values of {@link iterable}
  */
 export function peek<T>(
-  iterable: Iterable<T>,
-  consumer: Consumer<T>,
+    iterable: Iterable<T>,
+    consumer: Consumer<T>,
 ): Iterator<T>;
 
 /**
@@ -267,7 +300,7 @@ export function peek<T>(
  * @returns {Iterator<T>} An infinite iterator containing `object`
  */
 export function repeat<T>(
-  object: T,
+    object: T,
 ): Iterator<T>;
 
 /**
@@ -285,8 +318,8 @@ export function repeat<T>(
  *  times
  */
 export function repeat<T>(
-  object: T,
-  times: number,
+    object: T,
+    times: number,
 ): Iterator<T>;
 
 /**
@@ -306,8 +339,8 @@ export function repeat<T>(
  * @returns {Iterator<T>} The scanned results
  */
 export function scan<T>(
-  iterable: Iterable<T>,
-  accumulator: Accumulator<T, T>,
+    iterable: Iterable<T>,
+    accumulator: Accumulator<T, T>,
 ): Iterator<T>;
 
 /**
@@ -327,9 +360,9 @@ export function scan<T>(
  * @param {R} initial
  */
 export function scan<T, R>(
-  iterable: Iterator<T>,
-  accumulator: Accumulator<T, R>,
-  initial: R,
+    iterable: Iterator<T>,
+    accumulator: Accumulator<T, R>,
+    initial: R,
 ): Iterator<R>;
 
 /**
@@ -349,8 +382,8 @@ export function scan<T, R>(
  *  @throws {Error} if limit < 0
  */
 export function take<T>(
-  iterable: Iterable<T>,
-  limit: number,
+    iterable: Iterable<T>,
+    limit: number,
 ): Iterator<T>;
 
 /**
@@ -364,8 +397,8 @@ export function take<T>(
  * ```
  */
 export function takeWhile<T>(
-  iterable: Iterable<T>,
-  predicate: Predicate<T>,
+    iterable: Iterable<T>,
+    predicate: Predicate<T>,
 ): Iterator<T>;
 
 /**
@@ -392,8 +425,8 @@ export function takeWhile<T>(
  * @throws {Error} if the given size is 0
  */
 export function window<T>(
-  iterable: Iterable<T>,
-  size: number,
+    iterable: Iterable<T>,
+    size: number,
 ): Iterator<ArrayLike<T>>;
 
 /**
@@ -410,7 +443,7 @@ export function window<T>(
  * ```
  */
 export function zip(
-  ...args: Iterable<unknown>[]
+    ...args: Iterable<unknown>[]
 ): Iterable<ArrayLike<unknown>>;
 
 /**
@@ -463,11 +496,11 @@ export function zip(
  * ```
  */
 export function zip(
-  ...args: [
-    ...Iterable<unknown>[],
-    {
-        strategy: "shortest" | "longest" | "strict",
-        fillValue?: unknown,
-    },
-  ]
+    ...args: [
+        ...Iterable<unknown>[],
+        {
+            strategy: "shortest" | "longest" | "strict";
+            fillValue?: unknown;
+        },
+    ]
 ): Iterable<ArrayLike<unknown>>;

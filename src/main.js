@@ -30,7 +30,11 @@ export function* chain(...iters) {
     }
 }
 
-export function chunk(iter, size, {strategy = "dropEnd"} = {}) {
+export function chunk(
+    iter,
+    size,
+    {strategy = "dropEnd", fillValue = undefined} = {},
+) {
     if (size <= 0) {
         throw new Error("Cannot yield chunks of size <= 0");
     }
@@ -45,6 +49,9 @@ export function chunk(iter, size, {strategy = "dropEnd"} = {}) {
         }
         if (strategy === "keepEnd" && arr.length !== 0) {
             yield arr;
+        } else if (strategy === "padEnd" && arr.length !== 0) {
+            arr.length = size;
+            yield Array.from(arr, (e) => e ?? fillValue);
         } else if (strategy === "strict" && arr.length !== 0) {
             throw Error("Incomplete chunk");
         }
